@@ -4,19 +4,28 @@
 # Guarda 2 ó 3 segundos de la secuencia detectada en un archivo de vídeo.
 # TODO: Opcional: muestra el objeto seleccionado anulando el fondo.
 
+
+# █ █▀▄▀█ █▀█ █▀█ █▀█ ▀█▀ █▀
+# █ █░▀░█ █▀▀ █▄█ █▀▄ ░█░ ▄█
+
+
 import cv2 as cv
 import numpy as np
 from umucv.stream import autoStream
 from umucv.util import Video, ROI, putText
 
+
+# ▄▀█ █▀█ █▀█ █░░ █ █▀▀ ▄▀█ ▀█▀ █ █▀█ █▄░█
+# █▀█ █▀▀ █▀▀ █▄▄ █ █▄▄ █▀█ ░█░ █ █▄█ █░▀█
+
+
 video = Video(fps=25)
 video.ON = False
 
-mainWindowName = 'input'
-cv.namedWindow(mainWindowName)
-cv.moveWindow(mainWindowName, 0, 0)
+cv.namedWindow('MainWindow')
+cv.moveWindow('MainWindow', 0, 0)
 
-region = ROI(mainWindowName)
+region = ROI('MainWindow')
 
 bgsub = cv.createBackgroundSubtractorMOG2(500, 16, False)
 kernel = np.ones((3,3),np.uint8)
@@ -26,7 +35,7 @@ for key, frame in autoStream():
     if key == ord('g'):
         video.ON = not video.ON
     
-    #frame = cv.flip(frame, 1)
+    frame = cv.flip(frame, 1) # TODO: quitar antes de entregar
     
     if region.roi:
         # Select ROI
@@ -38,7 +47,7 @@ for key, frame in autoStream():
         noiseless = cv.cvtColor(act_roi, cv.COLOR_BGR2GRAY)
         noiseless = cv.GaussianBlur(noiseless, (21, 21), 0)
         # Detected activity mask
-        fgmask = bgsub.apply(noiseless)
+        fgmask = bgsub.apply(noiseless, learningRate = -1)
         fgmask = cv.erode(fgmask,kernel,iterations = 1)
         fgmask = cv.medianBlur(fgmask,3)
         # Detected object
@@ -61,7 +70,7 @@ for key, frame in autoStream():
             cv.destroyWindow('Activity')
 
     putText(frame, 'Video record: '+('ON' if video.ON else 'OFF') )
-    cv.imshow(mainWindowName,frame)
+    cv.imshow('MainWindow',frame)
 
 cv.destroyAllWindows()
 video.release()

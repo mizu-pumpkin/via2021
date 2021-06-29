@@ -2,13 +2,24 @@
 # COLOR. Construye un clasificador de objetos en base a la similitud de los
 # histogramas de color del ROI (de los 3 canales por separado).
 # see FAQ
-# Opcional: Segmentación densa por reproyección de histograma.
+# TODO: Opcional: Segmentación densa por reproyección de histograma.
+# usar el notebook colorseg como referencia (y puede que codebook también)
+
+
+# █ █▀▄▀█ █▀█ █▀█ █▀█ ▀█▀ █▀
+# █ █░▀░█ █▀▀ █▄█ █▀▄ ░█░ ▄█
+
 
 import cv2 as cv
 import numpy as np
 from umucv.stream import autoStream
 from umucv.util import ROI, putText
 from collections import deque
+
+
+# ▄▀█ █░█ ▀▄▀
+# █▀█ █▄█ █░█
+
 
 bins = np.arange(256).reshape(256,1)
 colors = [ (255,0,0),(0,255,0),(0,0,255) ] #('b','g','r')
@@ -19,11 +30,16 @@ def calcHist(im, channel):
     cv.normalize(hist_item,hist_item,0,255,cv.NORM_MINMAX)
     return np.int32(np.around(hist_item))
 
-def DrawHistogramOnImage(im, h):
+def DrawHistogramOnImage(image, h_im):
+    width,height,_ = h_im.shape
     for channel, color in enumerate(colors):
-        hist = calcHist(im, channel)
-        pts = np.int32(np.column_stack((bins,hist)))
-        cv.polylines(h,[pts],False,color,2)
+        hist = calcHist(image, channel)
+        # Editamos los valores para que no salga boca abajo
+        # y para que ocupe todo el ancho
+        xs = bins*(width/256)
+        ys = height-hist*(height/300)
+        pts = np.int32(np.column_stack((xs,ys)))
+        cv.polylines(h_im,[pts],False,color,thickness=2)
 
 # La comparación entre histogramas puede hacerse de muchas formas.
 # Una muy sencilla es la suma de diferencias absolutas en cada canal
@@ -39,20 +55,30 @@ def distancia_histogramas(model, roi):
     # y quedarnos el máximo de los tres canales
     return max(B,G,R)
 
+def DrawNamedWindow(name, im, x, y, w, h, normal=True):
+    if normal:
+        cv.namedWindow(name, cv.WINDOW_NORMAL)
+    else:
+        cv.namedWindow(name)
+    cv.resizeWindow(name, w, h)
+    cv.moveWindow(name, x, y)
+    cv.imshow(name, im)
 
-#   ▄▀█ █▀█ █▀█ █░░ █ █▀▀ ▄▀█ ▀█▀ █ █▀█ █▄░█
-#   █▀█ █▀▀ █▀▀ █▄▄ █ █▄▄ █▀█ ░█░ █ █▄█ █░▀█
+# ▄▀█ █▀█ █▀█ █░░ █ █▀▀ ▄▀█ ▀█▀ █ █▀█ █▄░█
+# █▀█ █▀▀ █▀▀ █▄▄ █ █▄▄ █▀█ ░█░ █ █▄█ █░▀█
 
 
-cv.namedWindow('MainWindow')
+cv.namedWindow('MainWindow', cv.WINDOW_NORMAL)
+cv.resizeWindow('MainWindow', 640, 480)
 cv.moveWindow('MainWindow', 0, 0)
+X,Y,_,_ = cv.getWindowImageRect('MainWindow')
 
 region = ROI('MainWindow')
 models = deque(maxlen=3) # para limitar los modelos a 3
+max_h = 80
 
 for key, frame in autoStream():
-    
-    frame = cv.flip(frame, 1)
+    iX,iY,W,H = cv.getWindowImageRect('MainWindow')
     
     if region.roi:
         # Select ROI
@@ -63,8 +89,12 @@ for key, frame in autoStream():
 
         # Cuando se marca un ROI con el ratón se muestran los
         # histogramas (normalizados) de los 3 canales por separado.
-        # TODO: cambiar para que no salga boca abajo
         DrawHistogramOnImage(roi_copy, roi)
+
+        # Show histogram
+        histogram = np.zeros((300,256,3))
+        DrawHistogramOnImage(roi_copy, histogram)
+        DrawNamedWindow('histogram', histogram, iX+X+W+max_h*3, iY+Y, max_h*4, max_h*4)
 
         # Si se pulsa una cierta tecla se guarda el recuadro como un modelo
         # más y se muestra en la ventana "models" de abajo a la izquierda
@@ -77,7 +107,7 @@ for key, frame in autoStream():
         distances = []
         for model in models:
             dist = distancia_histogramas(model, roi_copy)
-            distances.append(dist/100)
+            distances.append(dist/100000)
 
         # Las distancias se muestran arriba a la izquierda
         putText(frame, f'{str(distances)}')
@@ -94,37 +124,19 @@ for key, frame in autoStream():
             cv.destroyWindow('histogram')
 
     if len(models) > 0:
-        X,Y,W,H = cv.getWindowImageRect('MainWindow')
-        max_h = 80
-
         # Show saved models as single picture
         # La ventana de models puede construirse con unas miniaturas
         # reescaladas a una misma altura predeterminada y ancho
         # proporcional al original, o simplemente a un cuadrado fijo.
         resized_models = [cv.resize(m, (max_h, max_h)) for m in models] # width: int(m.shape[1] * max_h / m.shape[0])
-        cv.namedWindow('models')
-        cv.resizeWindow('models', max_h*3, max_h)
-        cv.moveWindow('models', X+W, Y)
-        cv.imshow('models', cv.hconcat(resized_models))
+        DrawNamedWindow('models', cv.hconcat(resized_models), iX+W, iY, max_h*3, max_h, normal=False)
 
         # Show most similar model
         # La menor distancia nos indica el modelo más parecido, y se muestra
         # en la ventana "detected". Si la menor distancia es muy grande se
         # puede rechazar la decisión y y mostrar un recuadro negro.
         detected = resized_models[distances.index(min(distances))]
-        cv.namedWindow('detected', cv.WINDOW_NORMAL)
-        cv.resizeWindow('detected', max_h*3, max_h*3)
-        cv.moveWindow('detected', X+W, 32+Y+max_h)
-        cv.imshow('detected', detected)
-
-        # Show histogram
-        histogram = np.zeros((300,256,3))
-        DrawHistogramOnImage(roi_copy, histogram)
-        histogram = np.flipud(histogram)
-        cv.namedWindow('histogram', cv.WINDOW_NORMAL)
-        cv.resizeWindow('histogram', max_h*4, max_h*4)
-        cv.moveWindow('histogram', X+W+max_h*3+9, 32+Y)
-        cv.imshow('histogram', histogram)
+        DrawNamedWindow('detected', detected, iX+W, iY+Y+max_h, max_h*3, max_h*3)
 
     cv.imshow('MainWindow',frame)
 
