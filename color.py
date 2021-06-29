@@ -110,7 +110,9 @@ for key, frame in autoStream():
             distances.append(dist/100000)
 
         # Las distancias se muestran arriba a la izquierda
-        putText(frame, f'{str(distances)}')
+        distString = ''
+        for dist in distances: distString += '%.2f' % dist + ' '
+        putText(frame, distString.strip())
 
         # Draw ROI rectangle on frame
         cv.rectangle(frame, (x1,y1), (x2,y2), color=(0,255,255), thickness=2)
