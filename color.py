@@ -68,14 +68,16 @@ def DrawNamedWindow(name, im, x, y, w, h, normal=True):
 # █▀█ █▀▀ █▀▀ █▄▄ █ █▄▄ █▀█ ░█░ █ █▄█ █░▀█
 
 
+maxlen = 6
+max_h = 80
+
 cv.namedWindow('MainWindow', cv.WINDOW_NORMAL)
 cv.resizeWindow('MainWindow', 640, 480)
 cv.moveWindow('MainWindow', 0, 0)
 X,Y,_,_ = cv.getWindowImageRect('MainWindow')
 
 region = ROI('MainWindow')
-models = deque(maxlen=3) # para limitar los modelos a 3
-max_h = 80
+models = deque(maxlen=maxlen) # para limitar los modelos
 
 for key, frame in autoStream():
     iX,iY,W,H = cv.getWindowImageRect('MainWindow')
@@ -94,7 +96,7 @@ for key, frame in autoStream():
         # Show histogram
         histogram = np.zeros((300,256,3))
         DrawHistogramOnImage(roi_copy, histogram)
-        DrawNamedWindow('histogram', histogram, iX+X+W+max_h*3, iY+Y, max_h*4, max_h*4)
+        DrawNamedWindow('histogram', histogram, iX+W, iY+Y+max_h, max_h*int(maxlen/2), max_h*int(maxlen/2))
 
         # Si se pulsa una cierta tecla se guarda el recuadro como un modelo
         # más y se muestra en la ventana "models" de abajo a la izquierda
@@ -131,14 +133,14 @@ for key, frame in autoStream():
         # reescaladas a una misma altura predeterminada y ancho
         # proporcional al original, o simplemente a un cuadrado fijo.
         resized_models = [cv.resize(m, (max_h, max_h)) for m in models] # width: int(m.shape[1] * max_h / m.shape[0])
-        DrawNamedWindow('models', cv.hconcat(resized_models), iX+W, iY, max_h*3, max_h, normal=False)
+        DrawNamedWindow('models', cv.hconcat(resized_models), iX+W, iY, max_h*maxlen, max_h, normal=False)
 
         # Show most similar model
         # La menor distancia nos indica el modelo más parecido, y se muestra
         # en la ventana "detected". Si la menor distancia es muy grande se
         # puede rechazar la decisión y y mostrar un recuadro negro.
         detected = resized_models[distances.index(min(distances))]
-        DrawNamedWindow('detected', detected, iX+W, iY+Y+max_h, max_h*3, max_h*3)
+        DrawNamedWindow('detected', detected, iX+W+max_h*int(maxlen/2), iY+Y+max_h, max_h*int(maxlen/2), max_h*int(maxlen/2))
 
     cv.imshow('MainWindow',frame)
 
