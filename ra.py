@@ -3,7 +3,7 @@
 # a) los objetos virtuales deben cambiar de forma, posición o tamaño siguiendo alguna lógica;
 # b) el usuario puede observar la escena cambiante desde cualquier punto de vista moviendo la cámara alrededor del marcador;
 # c) el usuario puede marcar con el ratón en la imagen puntos del plano de la escena para interactuar con los objetos virtuales.
-
+# TODO: cambiar el cubo vacío por un cubo con textura
 
 # █ █▀▄▀█ █▀█ █▀█ █▀█ ▀█▀ █▀
 # █ █░▀░█ █▀▀ █▄█ █▀▄ ░█░ ▄█
@@ -11,6 +11,8 @@
 
 import cv2          as cv
 import numpy        as np
+
+import matplotlib.path as mpltPath
 
 from umucv.stream   import autoStream
 from umucv.htrans   import htrans, Pose
@@ -93,10 +95,19 @@ UD = 0
 LR = 0
 sin = 0
 cos = 1
-size = 0.25
-increment = 0.25
+minSize = 0.125
+maxSize = 1
+size = minSize
+
+colors = [(0,0,128), (0,128,0), (128,0,0)]
+col = 0
 
 for n, (key, frame) in enumerate(stream):
+
+    if key == ord('+') and size < maxSize:
+        size += minSize
+    if key == ord('-') and size > minSize:
+        size -= minSize
 
     g = cv.cvtColor(frame,cv.COLOR_BGR2GRAY)
     cs = extractContours(g, minarea=5, reduprec=2)
@@ -107,11 +118,6 @@ for n, (key, frame) in enumerate(stream):
         p = bestPose(K,g,marker)
         if p.rms < 2:
             poses += [p.M]
-    
-    if points[0] != (0,0): # TODO: click dentro del cubo o al menos del marker
-        size += increment
-        if size == 1 or size == 0.25: increment *= -1
-        points[0] = (0,0)
 
     for M in poses:
 
@@ -123,7 +129,7 @@ for n, (key, frame) in enumerate(stream):
         # cv.drawContours(frame,[htrans(M,marker).astype(int)], -1, (0,0,0) , 3, cv.LINE_AA)
         # showAxes(frame, M, scale=0.5)
 
-        # Move the cube
+        # Move the cube along the marker
         oldsin = sin
         sin = np.sin(n/50)
 
@@ -140,8 +146,18 @@ for n, (key, frame) in enumerate(stream):
             UD = 0
             LR = abs(sin)
 
-        ARObj = cube*size + (LR, UD, 0)
-        cv.drawContours(frame, [ htrans(M, ARObj).astype(int) ], -1, (0,128,0), 3, cv.LINE_AA)
+        fig3D = cube*size + ((1-size)*LR, (1-size)*UD, 0)
+        fig2D = htrans(M, fig3D).astype(int)
+
+        # Check if the point is inside the figure
+        if points[0] != (0,0):
+            if mpltPath.Path(fig2D).contains_points(points):
+                col += 1
+                if (col >= len(colors)): col = 0
+            points[0] = (0,0)
+        
+        # Draw the figure
+        cv.drawContours(frame, [fig2D], -1, colors[col], 3, cv.LINE_AA)
 
     cv.imshow('AR',frame)
 
