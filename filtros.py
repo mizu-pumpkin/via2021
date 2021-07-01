@@ -14,16 +14,12 @@
 import cv2 as cv
 import numpy as np
 from umucv.stream import autoStream
-from umucv.util import ROI, putText
-import scipy.signal      as signal
+from umucv.util import ROI, putText, mkParam
 
 
 # ▄▀█ █░█ ▀▄▀
 # █▀█ █▄█ █░█
 
-
-def nothing(x):
-    pass
 
 def MakeNamedWindow(name, x, y, w, h):
     cv.namedWindow(name, cv.WINDOW_NORMAL)
@@ -37,7 +33,6 @@ def MakeNamedWindow(name, x, y, w, h):
 
 def cconv(im,k):
     return cv.filter2D(im,-1,k)
-    #return signal.convolve2d(im, k, boundary='symm', mode='same')
 
 # Podemos combinar los kernerls de derivada en dirección horizontal y
 # vertical para conseguir una medida de borde en cualquier orientación
@@ -99,9 +94,10 @@ cv.namedWindow('MainWindow')
 cv.resizeWindow('MainWindow', W, H)
 cv.moveWindow('MainWindow', 0, 0)
 
-cv.createTrackbar('Brightness', 'MainWindow', 1, 100, nothing) # Brightness
-cv.createTrackbar('Border', 'MainWindow', 1, 100, nothing) # Border
-cv.createTrackbar('Kernel', 'MainWindow', 1, 30, nothing) # Drunk, Box, Gaussian
+trackbar = mkParam('MainWindow')
+trackbar.addParam('Brightness',1,100) # Brightness
+trackbar.addParam('Border',1,100)     # Border
+trackbar.addParam('Kernel',1,30)      # Drunk, Box, Gaussian
 
 w = int(W * 0.35)
 h = int(H * 0.35)
@@ -118,12 +114,11 @@ filters = [0] * 7
 f_names = ['No filter', 'Brightness', 'Border', 'Drunk', 'Box', 'Gaussian', 'Laplacian']
 
 for key, frame in autoStream():
-    frame = cv.flip(frame, 1) # TODO: quitar antes de entregar
 
     # Get values from trackbars
-    brightness = cv.getTrackbarPos('Brightness', 'MainWindow') / 10
-    border = cv.getTrackbarPos('Border', 'MainWindow') / 10
-    kernel = cv.getTrackbarPos('Kernel', 'MainWindow')
+    brightness = trackbar.Brightness / 10
+    border = trackbar.Border / 10
+    kernel = trackbar.Kernel
     if kernel == 0: kernel = 1
 
     # Define kernels for filters
