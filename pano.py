@@ -13,11 +13,12 @@
 
 import cv2 as cv
 import numpy as np
+import matplotlib.pyplot as plt
 import glob
+import math
 
 from umucv.stream import autoStream
-from umucv.util import putText
-from umucv.htrans import desp, scale
+from umucv.htrans import htrans, desp
 
 
 # ▄▀█ █░█ ▀▄▀
@@ -60,14 +61,25 @@ def match(query, model):
     return sum(mask.flatten() > 0), H
 
 
+def transform_corners(H, img):
+    h,w,_ = img.shape
+    corners = np.array([ [0,0],[0,h],[w,h],[w,0] ])
+    trans_corners = htrans(H, corners)
+    xx = [x for x,_ in trans_corners]
+    yy = [y for _,y in trans_corners]
+    return min(xx), max(xx), min(yy), max(yy)
+
+
 # ▄▀█ █▀█ █▀█ █░░ █ █▀▀ ▄▀█ ▀█▀ █ █▀█ █▄░█
 # █▀█ █▀▀ █▀▀ █▄▄ █ █▄▄ █▀█ ░█░ █ █▄█ █░▀█
 
 
-threshold = 30
+dirPath = 'images/pano/'
+
+threshold = 4
 
 # Load the images
-pano = [cv.imread(x) for x in sorted( glob.glob('images/pano/*.jpg') )]
+pano = [cv.imread(x) for x in sorted( glob.glob(dirPath+'*.jpg') )]
 
 # Sort matched images by number of matching points
 sortedMatches = sorted([(match(p,q)[0],i,j) for i,p in enumerate(pano) for j,q in enumerate(pano) if i< j],reverse=True)
@@ -84,22 +96,21 @@ for sm in sortedMatches:
 
 center = maxMatches.index(max(maxMatches))
 
-# Set sizes for the result image
-h,w,_ = pano[center].shape
-x,y = 300,300
-T = desp((x,y)) @ scale([0.2,0.2])
-size = (x*2,y*2)
+# Homography array to store homographies for composition
+homographies = [None] * len(pano)
 
-# Put the center image in the result
-base = cv.warpPerspective(pano[center], T , size)
-
-Hs = [None] * len(pano) # composite homographies to the center
-used = [False] * len(pano) # if the image was already put in the result
+# Array to check if an image was already used
+used = [False] * len(pano)
 used[center] = True
+
+# Array to store the min/max corners values of the images
+corners = [None] * len(pano)
+h,w,_ = pano[center].shape
+corners[center] = (0, w, 0, h)
 
 # While there are still images to put in the result
 while len(sortedMatches) > 0 and not all(used):
-
+    
     for sm in sortedMatches:
         _, fst, snd = sm
         
@@ -113,24 +124,60 @@ while len(sortedMatches) > 0 and not all(used):
             x2 = fst
         else: continue
 
+        print('Matching '+str(x1)+' and '+str(x2))
+
         _,H = match(pano[x1],pano[x2])
 
         # Composite the homography if the image is not directly
         # connected to the center image
-        if Hs[x1] is not None:
-            H = Hs[x1]@H
+        if homographies[x1] is not None:
+            H = homographies[x1]@H
 
-        print('Matching '+str(x1)+' and '+str(x2))
-        cv.warpPerspective(pano[x2], T@H, size, base, 0, cv.BORDER_TRANSPARENT)
+        # Mark the image as used
         used[x2] = True
 
         # Save the homography for future compositions
-        Hs[x2] = H
+        homographies[x2] = H
+
+        # Save the corners
+        corners[x2] = transform_corners(H, pano[x2])
     
     # Remove matches that we don't need anymore
     sortedMatches = [s for s in sortedMatches if not (used[s[1]] and used[s[2]]) ]
 
-for key, frame in autoStream():
-    cv.imshow('pano',base)
 
-cv.destroyAllWindows()
+# Set sizes for the result image
+xmin = int( math.ceil( min([t[0] for t in corners if t is not None]) ) )
+xmax = int( math.ceil( max([t[1] for t in corners if t is not None]) ) )
+ymin = int( math.ceil( min([t[2] for t in corners if t is not None]) ) )
+ymax = int( math.ceil( max([t[3] for t in corners if t is not None]) ) )
+
+width = xmax - xmin
+height = ymax - ymin
+
+T = desp((-xmin, -ymin))
+size = (width, height)
+
+# Put the center image in the result
+result = cv.warpPerspective(pano[center], T , size)
+
+# Put the rest of the images in the result
+for i, H in enumerate(homographies):
+    if H is not None:
+        cv.warpPerspective(pano[i], T@H, size, result, 0, cv.BORDER_TRANSPARENT)
+
+# Write the result to a file
+cv.imwrite(dirPath+'results/result.jpg', result)
+
+# Show the result on screen
+plt.imshow( cv.cvtColor(result, cv.COLOR_BGR2RGB) )
+plt.show()
+
+# Resize the image to be shown on screen
+# fac = max(width/1028, height/768)
+# resized = cv.resize(result, ( int(width/fac), int(height/fac) ))
+
+# for key, frame in autoStream():
+#     cv.imshow('pano',resized)
+
+# cv.destroyAllWindows()
