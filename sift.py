@@ -2,6 +2,7 @@
 # SIFT. Escribe una aplicación de reconocimiento de objetos (p. ej. carátulas
 # de CD, portadas de libros, cuadros de pintores, etc.) con la webcam basada en
 # el número de coincidencias de keypoints.
+# TODO: opcional añadir que se guarden los modelos sobre la marcha
 
 
 # █ █▀▄▀█ █▀█ █▀█ █▀█ ▀█▀ █▀

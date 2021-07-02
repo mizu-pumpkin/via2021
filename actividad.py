@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-# # ACTIVIDAD. Construye un detector de movimiento en una región de interés
+# ACTIVIDAD. Construye un detector de movimiento en una región de interés
 # de la imagen marcada manualmente.
 # Guarda 2 ó 3 segundos de la secuencia detectada en un archivo de vídeo.
-# TODO: Opcional: muestra el objeto seleccionado anulando el fondo.
 
 
 # █ █▀▄▀█ █▀█ █▀█ █▀█ ▀█▀ █▀
@@ -27,7 +26,7 @@ cv.moveWindow('MainWindow', 0, 0)
 
 region = ROI('MainWindow')
 
-bgsub = cv.createBackgroundSubtractorMOG2(500, 16, False)
+bgsub = cv.createBackgroundSubtractorMOG2(500, 16, False) # TODO: jugar con los parámetros
 kernel = np.ones((3,3),np.uint8)
 
 for key, frame in autoStream():

@@ -64,6 +64,7 @@ def DrawNamedWindow(name, im, x, y, w, h, normal=True):
     cv.moveWindow(name, x, y)
     cv.imshow(name, im)
 
+
 # ▄▀█ █▀█ █▀█ █░░ █ █▀▀ ▄▀█ ▀█▀ █ █▀█ █▄░█
 # █▀█ █▀▀ █▀▀ █▄▄ █ █▄▄ █▀█ ░█░ █ █▄█ █░▀█
 
@@ -72,7 +73,6 @@ maxlen = 6
 max_h = 80
 
 cv.namedWindow('MainWindow', cv.WINDOW_NORMAL)
-cv.resizeWindow('MainWindow', 640, 480)
 cv.moveWindow('MainWindow', 0, 0)
 X,Y,_,_ = cv.getWindowImageRect('MainWindow')
 
