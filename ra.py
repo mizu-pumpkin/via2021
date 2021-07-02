@@ -3,7 +3,7 @@
 # a) los objetos virtuales deben cambiar de forma, posición o tamaño siguiendo alguna lógica;
 # b) el usuario puede observar la escena cambiante desde cualquier punto de vista moviendo la cámara alrededor del marcador;
 # c) el usuario puede marcar con el ratón en la imagen puntos del plano de la escena para interactuar con los objetos virtuales.
-# TODO: cambiar el cubo vacío por un cubo con textura
+
 
 # █ █▀▄▀█ █▀█ █▀█ █▀█ ▀█▀ █▀
 # █ █░▀░█ █▀▀ █▄█ █▀▄ ░█░ ▄█
@@ -72,11 +72,37 @@ square = np.array([
     [1,   1,   0],
     [1,   0,   0] ])
 
+# The picture we'll be using as texture
+pikachu = cv.imread('images/ra/pikachu.png')
+h,w = pikachu.shape[:2]
+src = np.array([[0,0],[0,h],[w,h],[w,0]])
+
+def drawPikachu(cube, frame):
+    sides = [
+        ( cube[5][0], np.array([cube[5], cube[0], cube[1], cube[6]]) ),
+        ( cube[6][0], np.array([cube[6], cube[1], cube[2], cube[7]]) ),
+        ( cube[7][0], np.array([cube[7], cube[2], cube[3], cube[8]]) ),
+        ( cube[8][0], np.array([cube[8], cube[3], cube[0], cube[5]]) )
+    ]
+
+    # A max of 3 sides can be seen at any given time and the cube will
+    # never appear from below. The 2 sides with the highest value of x,
+    # will be the ones that are actually seen. Draw them last.
+    sides.sort(key=lambda s : s[0], reverse=True)
+
+    # Top side must be the last to be drawn
+    sides.append( (cube[5][0], cube[5:9]) )
+
+    for _, dst in sides:
+        H = cv.getPerspectiveTransform(src.astype(np.float32), dst.astype(np.float32))
+        cv.warpPerspective(pikachu,H,(WIDTH,HEIGHT),frame,0,cv.BORDER_TRANSPARENT)
+
 
 # ▄▀█ █▀█ █▀█ █░░ █ █▀▀ ▄▀█ ▀█▀ █ █▀█ █▄░█
 # █▀█ █▀▀ █▀▀ █▄▄ █ █▄▄ █▀█ ░█░ █ █▄█ █░▀█
 
 
+# The clicked point on screen
 points = [1]
 points[0] = (0,0)
 
@@ -91,19 +117,19 @@ stream = autoStream()
 HEIGHT, WIDTH = next(stream)[1].shape[:2]
 K = Kfov( (WIDTH, HEIGHT), 60 )
 
-UD = 0
-LR = 0
+UD = 0 # up/down movement
+LR = 0 # left/right movement
 sin = 0
 cos = 1
-minSize = 0.125
-maxSize = 1
-size = minSize
+minSize = 0.25 # minimum size of the cube
+maxSize = 1    # maximum size of the cube
+size = minSize # actual size of the cube
 
-colors = [(0,0,128), (0,128,0), (128,0,0)]
-col = 0
+pikapika = False # if True, draw Pikachu
 
 for n, (key, frame) in enumerate(stream):
 
+    # Change the size of the cube
     if key == ord('+') and size < maxSize:
         size += minSize
     if key == ord('-') and size > minSize:
@@ -126,8 +152,6 @@ for n, (key, frame) in enumerate(stream):
         x,y = htrans(M, (0.7,0.7,0) ).astype(int)
         b,g,r = frame[y,x].astype(int)
         cv.drawContours(frame,[htrans(M,square*1.1+(-0.05,-0.05,0)).astype(int)], -1, (int(b),int(g),int(r)) , -1, cv.LINE_AA)
-        # cv.drawContours(frame,[htrans(M,marker).astype(int)], -1, (0,0,0) , 3, cv.LINE_AA)
-        # showAxes(frame, M, scale=0.5)
 
         # Move the cube along the marker
         oldsin = sin
@@ -149,15 +173,18 @@ for n, (key, frame) in enumerate(stream):
         fig3D = cube*size + ((1-size)*LR, (1-size)*UD, 0)
         fig2D = htrans(M, fig3D).astype(int)
 
-        # Check if the point is inside the figure
+        # Check if the clicked point is inside the figure
         if points[0] != (0,0):
             if mpltPath.Path(fig2D).contains_points(points):
-                col += 1
-                if (col >= len(colors)): col = 0
+                pikapika = not pikapika
             points[0] = (0,0)
         
-        # Draw the figure
-        cv.drawContours(frame, [fig2D], -1, colors[col], 3, cv.LINE_AA)
+        if pikapika:
+            # If the cube was clicked, draw surprised Pikachu
+            drawPikachu(fig2D, frame)
+        else:
+            # Otherwise draw a wire cube
+            cv.drawContours(frame, [fig2D], -1, (0,128,0), 3, cv.LINE_AA)
 
     cv.imshow('AR',frame)
 
