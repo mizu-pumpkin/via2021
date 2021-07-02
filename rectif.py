@@ -11,72 +11,54 @@
 
 import cv2 as cv
 import numpy as np
-
-from umucv.stream   import autoStream
-from umucv.util import putText
 from collections import deque
+import math
+
+from umucv.stream import autoStream
+from umucv.util import putText
+from umucv.htrans import htrans, desp, scale
 
 
 # ▄▀█ █░█ ▀▄▀
 # █▀█ █▄█ █░█
 
+
 W_cm_carnet = 8.5
-W_px_carnet = 173
 H_cm_carnet = 5.3
 
 refCarnet = np.array([
     [0, 0],
-    [0, H_cm_carnet],
+    [W_cm_carnet, 0],
     [W_cm_carnet, H_cm_carnet],
-    [W_cm_carnet, 0]
-]) * 20 + np.array([150, 400]) # scale, desp
+    [0, H_cm_carnet]
+]) * 20 # !!!: if you change this 20, change also 'W_px_carnet = 173'
+
+W_px_carnet = 173 # !!!: if you change this 173, change also '* 20'
 
 viewCarnet = np.array([
     [323, 462],
-    [510, 560],
+    [466, 258],
     [626, 311],
-    [466, 258]
+    [510, 560]
 ])
 
-
-# refRugby = np.array([
-#     [0, 0],
-#     [0, 100],
-#     [69, 100],
-#     [69, 0]
-# ]) * 3 + np.array([100, 150]) # scale, desp
-
-# viewRugby = np.array([
-#     [185, 397],
-#     [578, 529],
-#     [724, 337],
-#     [525, 320]
-# ])
-
-
-# refTennis = np.array([
-#     [0, 0],
-#     [0, 8.23],
-#     [23.77, 8.23],
-#     [23.77, 0]
-# ]) * 15 + np.array([100, 200]) # scale, desp
-
-# viewTennis = np.array([
-#     [74, 253],
-#     [376, 257],
-#     [369, 110],
-#     [166, 109]
-# ])
+def transform_corners(H, img):
+    h,w,_ = img.shape
+    corners = np.array([ [0,0],[0,h],[w,h],[w,0] ])
+    trans_corners = htrans(H, corners)
+    xx = [x for x,_ in trans_corners]
+    yy = [y for _,y in trans_corners]
+    return min(xx), max(xx), min(yy), max(yy)
 
 
 # ▄▀█ █▀█ █▀█ █░░ █ █▀▀ ▄▀█ ▀█▀ █ █▀█ █▄░█
 # █▀█ █▀▀ █▀▀ █▄▄ █ █▄▄ █▀█ ░█░ █ █▄█ █░▀█
 
 
-view = viewCarnet
-ref = refCarnet
-width_cm = W_cm_carnet
-width_px = W_px_carnet
+view = viewCarnet # change this value to change scenario
+ref = refCarnet # change this value to change scenario
+width_cm = W_cm_carnet # change this value to change scenario
+width_px = W_px_carnet # change this value to change scenario
 
 points = []
 ruler = deque(maxlen=2)
@@ -104,26 +86,42 @@ for key,frame in autoStream():
         show = False
     
     if key == ord('a'):# and len(points) >= 4:
-        #TODO:view = np.array(points)
+        #view = np.array(points)
         H,_ = cv.findHomography(view, ref)
-        rectif = cv.warpPerspective(frame, H, (800,600))
+
+        # Find the size to fit the image nicely
+        xmin, xmax, ymin, ymax = transform_corners(H, frame)
+        width = int( math.ceil(xmax - xmin) )
+        height = int( math.ceil(ymax - ymin) )
+        T = desp((-xmin, -ymin))
+        size = (width, height)
+        
+        # Warp the perspective based on the found size
+        rectif = cv.warpPerspective(frame, T@H, size)
         show = True
     
     if show:
-        rectifCopy = rectif.copy()
+        # Resize the image to fit nicely on average screen
+        fac = max(width/1028, height/768)
+        resized = cv.resize(rectif, ( int(width/fac), int(height/fac) ))
+
+        # Draw the clicked points
         for p in ruler:
-            cv.circle(rectifCopy, p, 3, (0,0,255), -1)
-        # Medimos las distancias marcadas
+            cv.circle(resized, p, 3, (0,0,255), -1)
+        
+        # Show measures
         if len(ruler) == 2:
-            cv.line(rectifCopy, ruler[0],ruler[1],(0,0,255))
+            cv.line(resized, ruler[0],ruler[1],(0,0,255))
             c = np.mean(ruler, axis=0).astype(int)
             d = np.linalg.norm(np.array(ruler[1])-ruler[0])
-            d = d * width_cm / width_px
-            putText(rectifCopy, f'{d:.1f} cm', c)
-        # Mostramos la imagen rectificada
-        cv.imshow('rectif', rectifCopy)
+            d = d * width_cm / (width_px / fac)
+            putText(resized, f'{d:.1f} cm', c)
+        
+        # Show rectified and resized image
+        cv.imshow('rectif', resized)
 
-    for p in points:
+    # Show the chosen points for the transformation
+    for p in view:
         x,y = p
         cv.circle(frame, (x,y), 3, (0,0,255), -1)
         putText(frame,f'{(x,y)}', (x,y))

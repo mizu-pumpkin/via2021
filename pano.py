@@ -172,12 +172,3 @@ cv.imwrite(dirPath+'results/result.jpg', result)
 # Show the result on screen
 plt.imshow( cv.cvtColor(result, cv.COLOR_BGR2RGB) )
 plt.show()
-
-# Resize the image to be shown on screen
-# fac = max(width/1028, height/768)
-# resized = cv.resize(result, ( int(width/fac), int(height/fac) ))
-
-# for key, frame in autoStream():
-#     cv.imshow('pano',resized)
-
-# cv.destroyAllWindows()
