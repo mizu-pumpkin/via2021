@@ -29,7 +29,7 @@ models_names = []
 models_keypoints = []
 models_descriptors = []
 
-path = Path("images/sift")
+path = Path("../images/sift")
 path = path.glob("*.jpg")
 for imagepath in path:
     image = cv.imread(str(imagepath))

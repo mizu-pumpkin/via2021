@@ -74,7 +74,7 @@ def transform_corners(H, img):
 # █▀█ █▀▀ █▀▀ █▄▄ █ █▄▄ █▀█ ░█░ █ █▄█ █░▀█
 
 
-dirPath = 'images/pano/'
+dirPath = '../images/pano/'
 
 threshold = 4
 

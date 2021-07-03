@@ -73,7 +73,7 @@ square = np.array([
     [1,   0,   0] ])
 
 # The picture we'll be using as texture
-pikachu = cv.imread('images/ra/pikachu.png')
+pikachu = cv.imread('../images/ra/pikachu.png')
 h,w = pikachu.shape[:2]
 src = np.array([[0,0],[0,h],[w,h],[w,0]])
 
