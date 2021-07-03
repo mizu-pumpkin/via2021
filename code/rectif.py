@@ -72,8 +72,8 @@ def fun2(event, x, y, flags, param):
     if event == cv.EVENT_LBUTTONDOWN:
         ruler.append( (x, y) )
 
-cv.namedWindow('input')
-cv.setMouseCallback('input', fun)
+cv.namedWindow('MainWindow')
+cv.setMouseCallback('MainWindow', fun)
 
 cv.namedWindow('rectif')
 cv.setMouseCallback('rectif', fun2)
@@ -126,6 +126,6 @@ for key,frame in autoStream():
         cv.circle(frame, (x,y), 3, (0,0,255), -1)
         putText(frame,f'{(x,y)}', (x,y))
 
-    cv.imshow('input', frame)
+    cv.imshow('MainWindow', frame)
 
 cv.destroyAllWindows()

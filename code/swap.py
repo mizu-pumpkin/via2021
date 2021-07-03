@@ -87,8 +87,8 @@ def fun(event, x, y, flags, param):
             points.clear()
         points.append((x,y))
 
-cv.namedWindow('input')
-cv.setMouseCallback('input', fun)
+cv.namedWindow('MainWindow')
+cv.setMouseCallback('MainWindow', fun)
 
 for key, frame in autoStream():
 
@@ -103,6 +103,6 @@ for key, frame in autoStream():
     else:
         draw_lines(points)
     
-    cv.imshow('input',frame)
+    cv.imshow('MainWindow',frame)
     
 cv.destroyAllWindows()
