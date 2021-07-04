@@ -34,8 +34,6 @@ for key, frame in autoStream():
     if key == ord('g'):
         video.ON = not video.ON
     
-    frame = cv.flip(frame, 1) # TODO: quitar antes de entregar
-    
     if region.roi:
         # Select ROI
         [x1,y1,x2,y2] = region.roi

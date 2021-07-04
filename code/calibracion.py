@@ -106,8 +106,8 @@ def fun(event, x, y, flags, param):
     if event == cv.EVENT_LBUTTONDOWN:
         points.append((x,y))
 
-cv.namedWindow('webcam')
-cv.setMouseCallback('webcam', fun)
+cv.namedWindow('MainWindow')
+cv.setMouseCallback('MainWindow', fun)
 
 for key, frame in stream:
 
@@ -122,6 +122,6 @@ for key, frame in stream:
 
         putText(frame, f'{alpha:.1f} deg', c)
 
-    cv.imshow('webcam',frame)
+    cv.imshow('MainWindow',frame)
     
 cv.destroyAllWindows()

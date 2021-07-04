@@ -30,7 +30,7 @@ models_keypoints = []
 models_descriptors = []
 
 path = Path("../images/sift")
-path = path.glob("*.jpg")
+path = path.glob("*.png")
 for imagepath in path:
     image = cv.imread(str(imagepath))
     keypoints , descriptors = sift.detectAndCompute(image, mask=None)
@@ -82,7 +82,7 @@ for key, frame in autoStream():
         # Se puede rechazar la decisión cuando el porcentaje ganador sea pequeño, cuando el segundo
         # mejor sea parecido al primero, o cuando haya pocas coincidencias en la imagen, entre otras
         # situaciones que dependen de la aplicación.
-        if bestLen*100 > 1:
+        if bestLen*100 > 0.5:
             # Se muestra en pequeño el modelo ganador su porcentaje, y la diferencia con el segundo mejor.
             image = cv.resize(models[index], (100, 100))
             img_height, img_width, _ = image.shape

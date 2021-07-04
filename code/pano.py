@@ -79,7 +79,7 @@ dirPath = '../images/pano/'
 threshold = 4
 
 # Load the images
-pano = [cv.imread(x) for x in sorted( glob.glob(dirPath+'*.jpg') )]
+pano = [cv.imread(x) for x in sorted( glob.glob(dirPath+'fium/*.jpg') )]
 
 # Sort matched images by number of matching points
 sortedMatches = sorted([(match(p,q)[0],i,j) for i,p in enumerate(pano) for j,q in enumerate(pano) if i< j],reverse=True)

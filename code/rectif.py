@@ -102,7 +102,7 @@ for key,frame in autoStream():
     
     if show:
         # Resize the image to fit nicely on average screen
-        fac = max(width/1028, height/768)
+        fac = max(width/800, height/600)
         resized = cv.resize(rectif, ( int(width/fac), int(height/fac) ))
 
         # Draw the clicked points
