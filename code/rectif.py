@@ -1,8 +1,4 @@
 #!/usr/bin/env python
-# RECTIF. Rectifica la imagen de un plano para medir distancias (tomando
-# manualmente referencias conocidas). Por ejemplo, mide la distancia entre las
-# monedas en coins.png o la distancia a la que se realiza el disparo en
-# gol-eder.png. Verifica los resultados con imágenes originales tomadas por ti.
 
 
 # █ █▀▄▀█ █▀█ █▀█ █▀█ ▀█▀ █▀
@@ -16,7 +12,7 @@ import math
 
 from umucv.stream import autoStream
 from umucv.util import putText
-from umucv.htrans import htrans, desp, scale
+from umucv.htrans import htrans, desp
 
 
 # ▄▀█ █░█ ▀▄▀
@@ -31,9 +27,10 @@ refCarnet = np.array([
     [W_cm_carnet, 0],
     [W_cm_carnet, H_cm_carnet],
     [0, H_cm_carnet]
-]) * 20 # !!!: if you change this 20, change also 'W_px_carnet = 173'
+])
 
-W_px_carnet = 173 # !!!: if you change this 173, change also '* 20'
+refCarnet *= 20 # !!!: if you change this 20, change also 'W_px_carnet = 173'
+W_px_carnet = 173 # !!!: if you change this 173, change also 'refCarnet *= 20'
 
 viewCarnet = np.array([
     [323, 462],
@@ -55,8 +52,8 @@ def transform_corners(H, img):
 # █▀█ █▀▀ █▀▀ █▄▄ █ █▄▄ █▀█ ░█░ █ █▄█ █░▀█
 
 
-view = viewCarnet # change this value to change scenario
-ref = refCarnet # change this value to change scenario
+view = viewCarnet      # change this value to change scenario
+ref = refCarnet        # change this value to change scenario
 width_cm = W_cm_carnet # change this value to change scenario
 width_px = W_px_carnet # change this value to change scenario
 
