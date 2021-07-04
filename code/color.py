@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-# COLOR. Construye un clasificador de objetos en base a la similitud de los
-# histogramas de color del ROI (de los 3 canales por separado).
-# see FAQ
 # TODO: Opcional: Segmentación densa por reproyección de histograma.
 # usar el notebook colorseg como referencia (y puede que codebook también)
 
@@ -99,7 +96,7 @@ for key, frame in autoStream():
         DrawNamedWindow('histogram', histogram, iX+W, iY+Y+max_h, max_h*int(maxlen/2), max_h*int(maxlen/2))
 
         # Si se pulsa una cierta tecla se guarda el recuadro como un modelo
-        # más y se muestra en la ventana "models" de abajo a la izquierda
+        # más y se muestra en la ventana "models" de la izquierda
         if key == ord('m'):
             model = roi_copy
             models.append(model)
@@ -137,8 +134,7 @@ for key, frame in autoStream():
 
         # Show most similar model
         # La menor distancia nos indica el modelo más parecido, y se muestra
-        # en la ventana "detected". Si la menor distancia es muy grande se
-        # puede rechazar la decisión y y mostrar un recuadro negro.
+        # en la ventana "detected".
         detected = resized_models[distances.index(min(distances))]
         DrawNamedWindow('detected', detected, iX+W+max_h*int(maxlen/2), iY+Y+max_h, max_h*int(maxlen/2), max_h*int(maxlen/2))
 

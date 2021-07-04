@@ -1,9 +1,4 @@
-# Ejercicio SWAP: Escribe una función copy_quad(p,src,q,dst) que mueve
-# un cuadrilátero p (los cuatro puntos almacenados en un array  4×2 )
-# de una imagen src a un cuadrilátero q en la imagen dst.
-# (Pista: necesitarás un máscara y es conveniente reducir la operación
-# al "bounding box" de las regiones.) Utilízala para reproducir el
-# experimento anterior marcando los puntos de referencia manualmente.
+#!/usr/bin/env python
 
 
 # █ █▀▄▀█ █▀█ █▀█ █▀█ ▀█▀ █▀

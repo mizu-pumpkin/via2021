@@ -1,6 +1,3 @@
-# CALIBRACIÓN
-
-
 # a) Realiza una calibración precisa de tu cámara mediante
 #    múltiples imágenes de un chessboard.
 #
