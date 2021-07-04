@@ -1,10 +1,4 @@
 #!/usr/bin/env python
-# PANO. Crea automáticamente un mosaico a partir de las imágenes en una carpeta.
-# Las imágenes no tienen por qué estar ordenadas ni formar una cadena lineal y
-# no sabemos el espacio que ocupa el resultado. El usuario debe intervenir lo
-# menos posible. Recuerda que debe tratarse de una escena plana o de una escena
-# cualquiera vista desde el mismo centro de proyección. Debes usar homografías.
-# Compara el resultado con el que obtiene la utilidad de stitching de OpenCV.
 
 
 # █ █▀▄▀█ █▀█ █▀█ █▀█ ▀█▀ █▀
@@ -17,7 +11,6 @@ import matplotlib.pyplot as plt
 import glob
 import math
 
-from umucv.stream import autoStream
 from umucv.htrans import htrans, desp
 
 
@@ -74,12 +67,12 @@ def transform_corners(H, img):
 # █▀█ █▀▀ █▀▀ █▄▄ █ █▄▄ █▀█ ░█░ █ █▄█ █░▀█
 
 
-dirPath = '../images/pano/'
+dirPath = '../images/pano/my_scene/'
 
 threshold = 4
 
 # Load the images
-pano = [cv.imread(x) for x in sorted( glob.glob(dirPath+'fium/*.jpg') )]
+pano = [cv.imread(x) for x in sorted( glob.glob(dirPath+'*.jpg') )]
 
 # Sort matched images by number of matching points
 sortedMatches = sorted([(match(p,q)[0],i,j) for i,p in enumerate(pano) for j,q in enumerate(pano) if i< j],reverse=True)

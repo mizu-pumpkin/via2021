@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-# SIFT. Escribe una aplicación de reconocimiento de objetos (p. ej. carátulas
-# de CD, portadas de libros, cuadros de pintores, etc.) con la webcam basada en
-# el número de coincidencias de keypoints.
 # TODO: opcional añadir que se guarden los modelos sobre la marcha
 
 
@@ -22,6 +19,8 @@ from pathlib import Path
 
 
 sift = cv.AKAZE_create() #sift = cv.xfeatures2d.SIFT_create(nfeatures=500)
+
+# añadimos un algoritmo para encontrar asociaciones por fuerza bruta :(
 matcher = cv.BFMatcher()
 
 models = []
