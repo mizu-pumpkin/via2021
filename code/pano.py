@@ -160,7 +160,7 @@ for i, H in enumerate(homographies):
         cv.warpPerspective(pano[i], T@H, size, result, 0, cv.BORDER_TRANSPARENT)
 
 # Write the result to a file
-cv.imwrite(dirPath+'results/result.jpg', result)
+cv.imwrite(dirPath+'result.jpg', result)
 
 # Show the result on screen
 plt.imshow( cv.cvtColor(result, cv.COLOR_BGR2RGB) )

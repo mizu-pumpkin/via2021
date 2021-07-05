@@ -19,6 +19,15 @@ from umucv.htrans import htrans, desp
 # █▀█ █▄█ █░█
 
 
+##########
+
+viewCarnet = np.array([
+    [323, 462],
+    [466, 258],
+    [626, 311],
+    [510, 560]
+])
+
 W_cm_carnet = 8.5
 H_cm_carnet = 5.3
 
@@ -32,12 +41,33 @@ refCarnet = np.array([
 refCarnet *= 20 # !!!: if you change this 20, change also 'W_px_carnet = 173'
 W_px_carnet = 173 # !!!: if you change this 173, change also 'refCarnet *= 20'
 
-viewCarnet = np.array([
-    [323, 462],
-    [466, 258],
-    [626, 311],
-    [510, 560]
+units_carnet = 'cm'
+
+##########
+
+viewFootball = np.array([
+    [113, 129],
+    [43, 125],
+    [118, 107],
+    [318, 118],
+    [32, 223]
 ])
+
+refFootball = np.array([
+    [11, 5.5],
+    [11, 0],
+    [0, 0],
+    [0, 16.5],
+    [40.32, 16.5]
+])
+
+refFootball *= 10 # !!!: if you change this 10, change also 'W_px_football = 168'
+W_px_football = 167.5 # !!!: if you change this 168, change also 'refFootball *= 10'
+W_cm_football = 16.5
+
+units_football = 'm'
+
+##########
 
 def transform_corners(H, img):
     h,w,_ = img.shape
@@ -52,10 +82,20 @@ def transform_corners(H, img):
 # █▀█ █▀▀ █▀▀ █▄▄ █ █▄▄ █▀█ ░█░ █ █▄█ █░▀█
 
 
-view = viewCarnet      # change this value to change scenario
-ref = refCarnet        # change this value to change scenario
-width_cm = W_cm_carnet # change this value to change scenario
-width_px = W_px_carnet # change this value to change scenario
+scenario = 2 # change this value to change scenario
+
+if scenario == 1:
+    view = viewCarnet      
+    ref = refCarnet
+    width_cm = W_cm_carnet
+    width_px = W_px_carnet
+    units = units_carnet
+else:
+    view = viewFootball     
+    ref = refFootball
+    width_cm = W_cm_football
+    width_px = W_px_football
+    units = units_football
 
 points = []
 ruler = deque(maxlen=2)
@@ -110,9 +150,9 @@ for key,frame in autoStream():
         if len(ruler) == 2:
             cv.line(resized, ruler[0],ruler[1],(0,0,255))
             c = np.mean(ruler, axis=0).astype(int)
-            d = np.linalg.norm(np.array(ruler[1])-ruler[0])
-            d = d * width_cm / (width_px / fac)
-            putText(resized, f'{d:.1f} cm', c)
+            d_px = np.linalg.norm(np.array(ruler[1])-ruler[0])
+            dist = d_px * width_cm / (width_px / fac)
+            putText(resized, f'{dist:.1f} {units}', c)
         
         # Show rectified and resized image
         cv.imshow('rectif', resized)
